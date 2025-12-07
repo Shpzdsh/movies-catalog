@@ -7,7 +7,7 @@
     @if (items | async; as movies) {
     <ul class="movies-list">
       @for (movie of movies; track movie.id) {
-      <li class="movie-item">
+      <li class="movie-item" (mouseenter)="onMovieHover($event, movie)" (mouseleave)="onMovieLeave()">
         <img [src]="movie.primaryImage?.url" [alt]="movie.primaryTitle">
         <h3>{{ movie.primaryTitle }}</h3>
         <p>{{ movie.startYear }}</p>
@@ -20,5 +20,66 @@
     <p class="loading">Загрузка...</p>
     }
   </div>
-</div>
 
+  @if (showQuickView && hoveredMovieId) {
+  <div class="quick-view-overlay" (mouseenter)="onQuickViewEnter()" (mouseleave)="onQuickViewLeaved()"
+    [style.left.px]="quickViewPosition.x" [style.top.px]="quickViewPosition.y">
+    @for (movie of (items | async) || []; track movie.id) {
+    @if (movie.id === hoveredMovieId) {
+    <div class="quick-view-content">
+      <div class="quick-view-header">
+        <img [src]="movie.primaryImage?.url" [alt]="movie.primaryTitle" class="quick-view-image">
+        <div class="quick-view-title">
+          <h3>{{ movie.primaryTitle }}</h3>
+          <p class="quick-view-year">
+            <strong>Год:</strong>
+            {{ movie.startYear || 'N/A'}}
+          </p>
+        </div>
+      </div>
+      <div class="quick-view-details">
+        @if (movie.rating?.aggregateRating) {
+        <div class="quick-view-rating">
+          <span class="rating-star">*</span>
+          <span>{{ movie.rating?.aggregateRating }}/10</span>
+          <span class="vote-count"> ({{ movie.rating?.voteCount | number }} голосов)</span>
+        </div>
+        }
+
+        @if (movie.genres && movie.genres.length > 0) {
+        <div class="quick-view-genres">
+          <strong>Жанры:</strong>
+          <div class="genre-tags">
+            @for (genre of movie.genres; track genre; let last = $last) {
+            <span class="genre-tag">{{ genre }}</span>
+            }
+          </div>
+        </div>
+        }
+
+        @if (movie.runtimeSeconds) {
+        <div class="quick-view-runtime">
+          <strong>Длительность:</strong>
+          {{ movie.runtimeSeconds / 60 | number:'1.0-0'}} мин.
+        </div>
+        }
+
+        @if (movie.plot) {
+        <div class="quick-view-plot">
+          <strong>Описание:</strong>
+          <p> {{ movie.plot }}</p>
+        </div>
+        }
+      </div>
+
+      <div class="quick-view-actions">
+        <button class="btn-priamry" (click)="router.navigate(['/movie', movie.id])">
+          Подробнее
+        </button>
+      </div>
+    </div>
+    }
+    }
+  </div>
+  }
+</div>
