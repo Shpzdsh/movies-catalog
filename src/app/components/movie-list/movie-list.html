@@ -1,0 +1,24 @@
+<div class="movies-list">
+  <h1>Каталог фильмов</h1>
+  <input type="text" placeholder="Поиск фильмов" (input)="searchTerm.next($any($event.target).value)"
+    class="search-input" />
+
+  <div class="movies-container">
+    @if (items | async; as movies) {
+    <ul class="movies-list">
+      @for (movie of movies; track movie.id) {
+      <li class="movie-item">
+        <img [src]="movie.primaryImage?.url" [alt]="movie.primaryTitle">
+        <h3>{{ movie.primaryTitle }}</h3>
+        <p>{{ movie.startYear }}</p>
+      </li>
+      } @empty {
+      <p class="no-movies">Фильмы не найдены</p>
+      }
+    </ul>
+    } @else {
+    <p class="loading">Загрузка...</p>
+    }
+  </div>
+</div>
+
