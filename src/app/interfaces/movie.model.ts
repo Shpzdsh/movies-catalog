@@ -1,28 +1,25 @@
-interface Image {
-  url: string,
-  width: string,
-  heigth: string,
-}
-
-interface Rating {
-  aggregateRating: number,
-  voteCount: number,
-}
-
 export interface Movie {
   id: string,
   type: string,
   primaryTitle: string,
   originalTitle: string,
-  primaryImage?: Image,
-  startYear?: number,
+  primaryImage?: {
+    url: string,
+    width: number,
+    height: number,
+  },
+  startYear: number,
   runtimeSeconds?: number,
   genres: string[],
-  rating?: Rating,
+  rating?: {
+    aggregateRating: number,
+    voteCount: number,
+  },
   plot?: string,
 }
 
-export interface SearchResult {
-  result: Movie[],
+export interface MovieResponse {
+  titles: Movie[],
   totalCount: number,
+  nextPageToken?: string,
 }

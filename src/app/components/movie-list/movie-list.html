@@ -1,3 +1,227 @@
+<!-- <div class="movie-list">
+  <header>
+    <h1>Каталог фильмов</h1>
+    <p>Найдите свой следующий любимый фильм</p>
+  </header>
+
+  <div class="search">
+    <div class="search-box">
+      <input
+        type="text"
+        placeholder="Поиск фильмов..."
+        [value]="searchTerm()"
+        (input)="onSearch($event)"
+        [disabled]="isLoading()"
+      />
+      @if (searchTerm()) {
+        <button (click)="searchTerm.set('')" class="clear-btn">×</button>
+      }
+      @if (isLoading() && !isLoadingMore()) {
+        <div class="spinner-small"></div>
+      }
+    </div>
+
+    @if (movies().length > 0) {
+      <div class="stats">
+        Найдено <strong>{{ totalCount() | number }}</strong> фильмов
+        @if (searchTerm()) {
+          по запросу "{{ searchTerm() }}"
+        }
+      </div>
+    }
+  </div>
+
+  @if (error()) {
+    <div class="error">
+      <span>⚠️ {{ error() }}</span>
+      <button (click)="clearError()" class="close-btn">×</button>
+    </div>
+  }
+
+  <main>
+    @if (isLoading()) {
+      <div class="loading">
+        <div class="spinner"></div>
+        <p>Загружаем фильмы...</p>
+      </div>
+    }
+
+    @else if (movies().length === 0 && !isLoading() && !error()) {
+      <div class="empty">
+        <div class="empty-icon">🎬</div>
+        <h3>
+          @if (searchTerm()) {
+            Ничего не найдено
+          } @else {
+            Фильмов пока нет
+          }
+        </h3>
+        <p>
+          @if (searchTerm()) {
+            Попробуйте другой запрос
+          } @else {
+            Начните с поиска
+          }
+        </p>
+      </div>
+    }
+
+    @else {
+      <div class="movies">
+        @for (movie of movies(); track movie.id) {
+          <div
+            class="movie"
+            (mouseenter)="onMovieHover($event, movie.id)"
+            (mouseleave)="onMovieLeave()"
+          >
+            <div class="movie-poster">
+              @if (movie.primaryImage?.url) {
+                <img
+                  [src]="movie.primaryImage?.url"
+                  [alt]="movie.primaryTitle"
+                  (error)="handleImageError($event)"
+                />
+              } @else {
+                <div class="no-poster">🎬</div>
+              }
+
+              @if (movie.rating?.aggregateRating) {
+                <div class="rating" [class]="getRatingClass(movie.rating?.aggregateRating)">
+                  {{ movie.rating?.aggregateRating | number:'1.1-1' }}
+                </div>
+              }
+            </div>
+
+            <div class="movie-info">
+              <h3>{{ movie.primaryTitle }}</h3>
+
+              <div class="movie-details">
+                <span>{{ movie.startYear }}</span>
+                @if (movie.runtimeSeconds) {
+                  <span>{{ formatRuntime(movie.runtimeSeconds) }}</span>
+                }
+              </div>
+
+              @if (movie.genres?.length) {
+                <div class="genres">
+                  @for (genre of movie.genres.slice(0, 2); track genre) {
+                    <span>{{ genre }}</span>
+                  }
+                  @if (movie.genres.length > 2) {
+                    <span class="more">+{{ movie.genres.length - 2 }}</span>
+                  }
+                </div>
+              }
+            </div>
+
+            <button class="more-btn" (click)="navigateToMovie(movie.id)">...</button>
+          </div>
+        }
+      </div>
+
+      @if (showLoadMore()) {
+        <div class="load-more">
+          <button
+            (click)="loadMore()"
+            [disabled]="isLoadingMore()"
+          >
+            @if (isLoadingMore()) {
+              <div class="spinner-small"></div>
+              Загрузка...
+            } @else {
+              Показать еще ({{ totalCount() - movies().length | number }})
+            }
+          </button>
+        </div>
+      }
+    }
+  </main>
+
+  @if (showQuickView() && hoveredMovie()) {
+    <div
+      class="quick-view"
+      (mouseenter)="onQuickViewEnter()"
+      (mouseleave)="onQuickViewLeave()"
+      [style.left.px]="quickViewPosition().x"
+      [style.top.px]="quickViewPosition().y"
+    >
+      <div class="quick-view-content">
+        <div class="quick-view-header">
+          @if (hoveredMovie()!.primaryImage?.url) {
+            <img [src]="hoveredMovie()!.primaryImage!.url" [alt]="hoveredMovie()!.primaryTitle" />
+          }
+
+          <div class="quick-view-info">
+            <h3>{{ hoveredMovie()!.primaryTitle }}</h3>
+
+            <div class="quick-view-details">
+              <span>{{ hoveredMovie()!.startYear }}</span>
+              @if (hoveredMovie()!.runtimeSeconds) {
+                <span>{{ formatRuntime(hoveredMovie()!.runtimeSeconds) }}</span>
+              }
+            </div>
+
+            @if (hoveredMovie()!.rating?.aggregateRating) {
+              <div class="quick-view-rating">
+                <div class="stars">
+                  @let stars = getRatingStars(hoveredMovie()!.rating!.aggregateRating);
+                  @for (star of [].constructor(stars.full); track star) {
+                    <span class="filled">★</span>
+                  }
+                  @if (stars.half) {
+                    <span class="half">★</span>
+                  }
+                  @for (star of [].constructor(stars.empty); track star) {
+                    <span>★</span>
+                  }
+                </div>
+                <div class="score">
+                  {{ hoveredMovie()!.rating!.aggregateRating | number:'1.1-1' }}/10
+                  <span>({{ hoveredMovie()!.rating!.voteCount | number }})</span>
+                </div>
+              </div>
+            }
+          </div>
+        </div>
+
+        <div class="quick-view-body">
+          @if (hoveredMovie()!.genres?.length) {
+            <div class="section">
+              <h4>Жанры</h4>
+              <div class="genres-list">
+                @for (genre of hoveredMovie()!.genres; track genre) {
+                  <span>{{ genre }}</span>
+                }
+              </div>
+            </div>
+          }
+
+          @if (hoveredMovie()!.plot) {
+            <div class="section">
+              <h4>Описание</h4>
+              <p>{{ hoveredMovie()!.plot }}</p>
+            </div>
+          }
+        </div>
+
+        <div class="quick-view-buttons">
+          <button (click)="navigateToMovie(hoveredMovie()!.id)">
+            Подробнее
+          </button>
+          <button (click)="showQuickView.set(false)" class="secondary">
+            Закрыть
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+
+  <footer>
+    <p>Всего фильмов: {{ totalCount() | number }} | Загружено: {{ movies().length | number }}</p>
+  </footer>
+</div> -->
+
+
 <div class="movies-list">
   <h1>Каталог фильмов</h1>
   <input type="text" placeholder="Поиск фильмов" (input)="searchTerm.next($any($event.target).value)"
@@ -46,7 +270,7 @@
         </div>
         }
 
-        @if (movie.genres && movie.genres.length > 0) {
+        @if (movie.genres) {
         <div class="quick-view-genres">
           <strong>Жанры:</strong>
           <div class="genre-tags">
@@ -70,12 +294,6 @@
           <p> {{ movie.plot }}</p>
         </div>
         }
-      </div>
-
-      <div class="quick-view-actions">
-        <button class="btn-priamry" (click)="router.navigate(['/movie', movie.id])">
-          Подробнее
-        </button>
       </div>
     </div>
     }
